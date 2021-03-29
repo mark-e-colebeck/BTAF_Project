@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+   .hide {
+       visibility: hidden
+    }
+</style>
+<body>
+<div class="container-fluid" ng-app="myApp" ng-controller="myCtrl">
+    <div class="row" style="background-color:#112843;height:50px">&nbsp;
+        <div class="row" style="background-color:#112843;height:50px">&nbsp;
+            <div class="col-sm-8">
+                <h3 style="color:White;text-align:left;font-weight: bold;">Automation Test Result</h3>
+            </div>
+            <!--<input type="textbox" style="margin-top:10px"/>
+            <i style="color:#04a1f4" class="pt-3 ml-1 search-icon fa fa-search"></i>-->
+        </div>
+    </div>
+    <div class="row" style="padding-top:10px">
+        <div class="col-sm-6" style="padding-left:10%">
+            <canvas id="myChart" width="300" height="300"></canvas>
+        </div>
+        <div class="col-sm-6" >
+            <table style="margin-top:20px" class="table table-striped table-bordered">
+                <tr>
+                    <td>Test Case Name:</td>
+                    <td>{{testData.testCaseName}}</td>
+                </tr>
+                <tr>
+                    <td>Test Case ID:</td>
+                    <td>{{testData.testCaseID}}</td>
+                </tr>
+                <tr>
+                    <td>Report Workbook and Worksheet:</td>
+                    <td>{{testData.reportWbName}}:{{testData.reportWsName}}</td>
+                </tr>
+                <tr>
+                    <td>Dependency Workbooks and Worksheets:</td>
+                    <td>{{testData.inputWbAndWs}}</td>
+                </tr>
+                <tr>
+                    <td>Execution Start Time (minutes):</td>
+                    <td>{{testData.executionStartTime}}</td>
+                </tr>
+                <tr>
+                    <td>Execution End Time :</td>
+                    <td>{{testData.executionEndTime}}</td>
+                </tr>
+                <tr>
+                    <td>Elapsed Time :</td>
+                    <td>{{testData.elapsedTime}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="row" style="padding-top:10px">
+        <div class="col-sm-3" style="padding-left:10%"></div>
+        <div class="col-sm-6" >
+            <table style="margin-top:20px" class="table table-striped table-bordered">
+                <th>Execution Summary</th>
+                <tr>
+                    <td></td>
+                    <td>Pass</td>
+                    <td>Fail</td>
+                    <td>Error</td>
+                    <td>Total</td>
+                </tr>
+                <tr ng-repeat="x in getDistinctTableNames()">
+                    <td>{{x}}</td>
+                    <td>{{getCountPassbyTableName(x)}}</td>
+                    <td>{{getCountFailbyTableName(x)}}</td>
+                    <td>{{getCountErrorbyTableName(x)}}</td>
+                    <td>{{getCountPassbyTableName(x)+getCountFailbyTableName(x)+getCountErrorbyTableName(x)}}</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>{{getTotalPassCount()}}</td>
+                    <td>{{getTotalFailCount()}}</td>
+                    <td>{{getTotalErrorCount()}}</td>
+                    <td>{{getTotalPassCount()+getTotalFailCount()+getTotalErrorCount()}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="panel-group" id="accordionContainer">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordionContainer" href="#accordionContainer1">
+                        InputForm Validation Report</a>
+                </h4>
+            </div>
+            <div id="accordionContainer1" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <div class="row" style="padding-top:10px">
+                        <div class="col-sm-12">
+                            <div class="panel-group" id="accordion">
+                                <div class="panel panel-default"  ng-repeat="x in getDistinctInputFrmTableNames() track by $index">
+                                    <div ng-if = "x">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="{{'#collapse' + $index}}">{{x}}</a>
+                                                Pass: {{getCountPassbyInputFrmTableName(x)}}
+                                                Fail: {{getCountFailbyInputFrmTableName(x)}}
+                                                Error: {{getCountErrorbyInputFrmTableName(x)}}
+                                            </h4>
+                                        </div>
+                                    </div>
+
+                                    <div id="{{'collapse' + $index}}" class="panel-collapse collapse">
+                                        <div ng-repeat="y in getDistinctSegmentbyInputFrmTableName(x) track by $index">
+                                            <div ng-repeat="z in getDistinctSolutionAreabyInputFrmSegment(x,y) track by $index">
+                                                <div style="padding-top:10px;padding-bottom:10px"> <span>Displaying status for </span>
+                                                    <span>  {{getDistinctSegmentNamebyInputFrmTableName(x)[0]}}</span>
+                                                    <span ng-if="y">= {{y}}</span>
+                                                    <span ng-if="getDistinctSegmentName2byInputFrmTableName(x,y)[0]">; {{getDistinctSegmentName2byInputFrmTableName(x,y)[0]}}</span>
+                                                    <span ng-if="z">= {{z}}</span></div>
+                                                Pass: {{getCountPassSolutionAreabyInputFrmSegment(x,y)}}
+                                                Fail: {{getCountFailSolutionAreabyInputFrmSegment(x,y)}}
+                                                Error: {{getCountErrorSolutionAreabyInputFrmSegment(x,y)}}
+                                                <table class="table table-striped table-bordered">
+                                                    <th></th>
+                                                    <th ng-repeat="a in getSolutionAreabyInputFrmSegment(x,y,z) track by $index">
+                                                        {{a.select}}
+                                                    </th>
+                                                    <tr>
+                                                        <td>Report Data</td>
+                                                        <td ng-repeat="a in getSolutionAreabyInputFrmSegment(x,y,z) track by $index">
+                                                            {{a.reportData}}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Input Form Data</td>
+                                                        <td ng-repeat="a in getSolutionAreabyInputFrmSegment(x,y,z) track by $index">
+                                                            {{a.inputFormData}}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Status</td>
+                                                        <td ng-repeat="a in getSolutionAreabyInputFrmSegment(x,y,z) track by $index">
+                                                            {{a.status}}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div></div></div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordionContainer" href="#accordionContainer2">
+                        Backend Validation Report</a>
+                </h4>
+            </div>
+            <div id="accordionContainer2" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <div class="row" style="padding-top:10px">
+                        <div class="col-sm-12">
+
+                            <div class="panel-group" id="accordion_backend">
+                                <div class="panel panel-default"  ng-repeat="x in getDistinctBckReportTableNames() track by $index">
+                                    <div ng-if = "x">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                <a data-toggle="collapse" data-parent="#accordion_backend" href="{{'#collapse_backend' + $index}}">{{x}}</a>
+                                                Pass: {{getCountPassbyBckReportTableName(x)}}
+                                                Fail: {{getCountFailbyBckReportTableName(x)}}
+                                                Error: {{getCountErrorbyBckReportTableName(x)}}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                    <div id="{{'collapse_backend' + $index}}" class="panel-collapse collapse">
+                                        <div ng-repeat="y in getDistinctSegmentbyBckReportTableName(x) track by $index">
+                                            <div ng-repeat="z in getDistinctSolutionAreabyBckReportSegment(x,y) track by $index">
+                                                <div style="padding-top:10px;padding-bottom:10px"> <span>Displaying status for </span>
+                                                    <span ng-if="y"> = {{getDistinctSegmentNamebyInputFrmTableName(x)}}</span>
+                                                    <span ng-if="z"> = {{z}}</span></div>
+                                                Pass: {{getCountPassSolutionAreabyBckReportSegment(x,y)}}
+                                                Fail: {{getCountFailSolutionAreabyBckReportSegment(x,y)}}
+                                                Error: {{getCountErrorSolutionAreabyBckReportSegment(x,y)}}
+                                                <table class="table table-striped table-bordered">
+                                                    <th></th>
+                                                    <th ng-repeat="a in getSolutionAreabyBckReportSegment(x,y,z) track by $index">
+                                                        {{a.select}}
+                                                    </th>
+                                                    <tr>
+                                                        <td>Report Data</td>
+                                                        <td ng-repeat="a in getSolutionAreabyBckReportSegment(x,y,z) track by $index">
+                                                            {{a.reportData}}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Input Form Data</td>
+                                                        <td ng-repeat="a in getSolutionAreabyBckReportSegment(x,y,z) track by $index">
+                                                            {{a.inputFormData}}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Status</td>
+                                                        <td ng-repeat="a in getSolutionAreabyBckReportSegment(x,y,z) track by $index">
+                                                            {{a.status}}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div></div></div></div></div>
+</div>
+
+<script>
+var app = angular.module("myApp", []);
+app.controller("myCtrl", function($scope) {
+$scope.isDashboard=false;
+let data= JSON.parse('@data');
+let backendData= JSON.parse('@backendData');
+let valResult= JSON.parse('@valResult');
+let testData= JSON.parse('@testData');
+$scope.testData = testData;
+
+            $scope.getDistinctTableNames=function(){
+                let filterData=valResult.map(a=>a.tableName);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+            }
+            $scope.getDistinctInputFrmTableNames=function(){
+                let filterData=data.map(a=>a.tableName);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+            }
+            $scope.getDistinctBckReportTableNames=function(){
+                let filterData=backendData.map(a=>a.tableName);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+            }
+	$scope.getDistinctSegmentNamebyInputFrmTableName=function(tableName){
+                   let filterData=data.filter(a=>a.tableName==tableName).map(a=>a.column1Name);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+              }
+	$scope.getDistinctSegmentName2byInputFrmTableName=function(tableName,column1Value){
+                   let filterData=data.filter(a=>a.tableName==tableName && a.column1Value==column1Value).map(a=>a.column2Name);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+              }
+            $scope.getDistinctSegmentbyInputFrmTableName=function(tableName){
+                   let filterData=data.filter(a=>a.tableName==tableName).map(a=>a.column1Value);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+              }
+
+            $scope.getDistinctSolutionAreabyInputFrmSegment=function(tableName,column1Value){
+                   let filterData=data.filter(a=>a.tableName==tableName && a.column1Value==column1Value).map(a=>a.column2Value);
+                    return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+              }
+              $scope.getDistinctSegmentbyBckReportTableName=function(tableName){
+                   let filterData=backendData.filter(a=>a.tableName==tableName).map(a=>a.column1Value);
+                   return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+              }
+
+            $scope.getDistinctSolutionAreabyBckReportSegment=function(tableName,column1Value){
+                   let filterData=backendData.filter(a=>a.tableName==tableName && a.column1Value==column1Value).map(a=>a.column2Value);
+                    return filterData.filter(function(elem, pos) {
+                        return filterData.indexOf(elem) == pos;
+                  });
+              }
+
+            $scope.getSolutionAreabyInputFrmSegment=function(tableName,column1Value,column2Value){
+                    return data.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.column2Value==column2Value);
+              }
+               $scope.getSolutionAreabyBckReportSegment=function(tableName,column1Value,column2Value){
+                    return backendData.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.column2Value==column2Value);
+              }
+
+            $scope.getCountPassbyTableName=function(tableName){
+                    let filterData=valResult.filter(a=>a.tableName==tableName && a.status=='Pass');
+                    return filterData.length;
+              }
+            $scope.getCountFailbyTableName=function(tableName){
+                    let filterData=valResult.filter(a=>a.tableName==tableName && a.status=='Fail');
+                    return filterData.length;
+              }
+	        $scope.getCountErrorbyTableName=function(tableName){
+                    let filterData=valResult.filter(a=>a.tableName==tableName && a.status=='Error');
+                    return filterData.length;
+              }
+              $scope.getCountPassbyInputFrmTableName=function(tableName){
+                    let filterData=data.filter(a=>a.tableName==tableName && a.status=='Pass');
+                    return filterData.length;
+              }
+            $scope.getCountFailbyInputFrmTableName=function(tableName){
+                    let filterData=data.filter(a=>a.tableName==tableName && a.status=='Fail');
+                    return filterData.length;
+              }
+	        $scope.getCountErrorbyInputFrmTableName=function(tableName){
+                    let filterData=data.filter(a=>a.tableName==tableName && a.status=='Error');
+                    return filterData.length;
+              }
+              $scope.getCountPassbyBckReportTableName=function(tableName){
+                    let filterData=backendData.filter(a=>a.tableName==tableName && a.status=='Pass');
+                    return filterData.length;
+              }
+            $scope.getCountFailbyBckReportTableName=function(tableName){
+                    let filterData=backendData.filter(a=>a.tableName==tableName && a.status=='Fail');
+                    return filterData.length;
+              }
+	        $scope.getCountErrorbyBckReportTableName=function(tableName){
+                    let filterData=backendData.filter(a=>a.tableName==tableName && a.status=='Error');
+                    return filterData.length;
+              }
+            $scope.getCountPassSolutionAreabySegment=function(tableName,column1Value){
+                    let filterData=valResult.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Pass');
+                    return filterData.length;
+              }
+
+            $scope.getCountFailSolutionAreabySegment=function(tableName,column1Value){
+                    let filterData=valResult.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Fail');
+                    return filterData.length;
+              }
+ 	        $scope.getCountErrorSolutionAreabySegment=function(tableName,column1Value){
+                    let filterData=valResult.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Error');
+                    return filterData.length;
+              }
+
+              $scope.getCountPassSolutionAreabyInputFrmSegment=function(tableName,column1Value){
+                    let filterData=data.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Pass');
+                    return filterData.length;
+              }
+
+            $scope.getCountFailSolutionAreabyInputFrmSegment=function(tableName,column1Value){
+                    let filterData=data.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Fail');
+                    return filterData.length;
+              }
+ 	        $scope.getCountErrorSolutionAreabyInputFrmSegment=function(tableName,column1Value){
+                    let filterData=data.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Error');
+                    return filterData.length;
+              }
+              $scope.getCountPassSolutionAreabyBckReportSegment=function(tableName,column1Value){
+                    let filterData=backendData.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Pass');
+                    return filterData.length;
+              }
+
+            $scope.getCountFailSolutionAreabyBckReportSegment=function(tableName,column1Value){
+                    let filterData=backendData.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Fail');
+                    return filterData.length;
+              }
+ 	        $scope.getCountErrorSolutionAreabyBckReportSegment=function(tableName,column1Value){
+                    let filterData=backendData.filter(a=>a.tableName==tableName && a.column1Value==column1Value && a.status=='Error');
+                    return filterData.length;
+              }
+            $scope.getTotalFailCount=function(){
+                    let filterData=valResult.filter(a=>a.status=='Fail');
+                    return filterData.length;
+              }
+            $scope.getTotalPassCount=function(){
+                    let filterData=valResult.filter(a=>a.status=='Pass');
+                    return filterData.length;
+              }
+	        $scope.getTotalErrorCount=function(){
+                    let filterData=valResult.filter(a=>a.status=='Error');
+                    return filterData.length;
+              }
+
+              var ctx= document.getElementById("myChart");
+              var myChart = new Chart(ctx, {
+              type: 'pie',
+              data: {
+                    labels: ['Pass','Fail','Error'],
+                    datasets: [{
+                          label: '# of Tests',
+                          data: [valResult.filter(a=>a.status=='Pass').length, valResult.filter(a=>a.status=='Fail').length,valResult.filter(a=>a.status=='Error').length],
+                          backgroundColor: [
+                           'rgba(2, 193, 66, 1)',
+                            'rgba(255,145,0, 1)',
+                            'rgba(255, 0, 0, 1)'
+                          ]
+                    }]
+              },
+              options: {
+                responsive: false
+              }
+              });
+        });
+</script>
+</body>
+</html>
